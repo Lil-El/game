@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        width: 100vw;
+        height: 100vh;
+      }
+      :root {
+        --color: #dad9d9;
+      }
+      .game-container {
+        width: 300px;
+        .chess-panel {
+          width: 100%;
+          height: 300px;
+          margin: auto;
+          display: flex;
+          flex-wrap: wrap;
+          & div {
+            width: 20px;
+            height: 20px;
+            box-sizing: border-box;
+            position: relative;
+
+            span {
+              width: 14px;
+              height: 14px;
+              margin: 3px;
+              border-radius: 50%;
+              position: absolute;
+              z-index: 1;
+              box-sizing: border-box;
+              pointer-events: none;
+            }
+
+            span.c0 {
+              background-color: #000;
+              border: 1px solid #000;
+            }
+            span.c1 {
+              background-color: #fff;
+              border: 1px solid #ddd;
+            }
+            i.circle1 {
+              width: 8px;
+              height: 8px;
+              margin: 6px;
+              border-radius: 50%;
+              position: absolute;
+              z-index: 1;
+              box-sizing: border-box;
+              background-color: #000;
+              pointer-events: none;
+            }
+            i.circle2 {
+              width: 6px;
+              height: 6px;
+              margin: 7px;
+              border-radius: 50%;
+              position: absolute;
+              z-index: 1;
+              box-sizing: border-box;
+              background-color: #000;
+              pointer-events: none;
+            }
+
+            &::before,
+            &::after {
+              content: "";
+              position: absolute;
+              width: 100%;
+              height: 1px;
+              background-color: var(--color);
+            }
+            &::before {
+              top: 50%;
+            }
+            &::after {
+              top: 50%;
+              rotate: 90deg;
+            }
+            &:nth-of-type(-n + 15) {
+              &::after {
+                width: 50%;
+                left: 5px;
+                top: 15px;
+              }
+            }
+            &:nth-of-type(n + 211) {
+              &::after {
+                width: 50%;
+                left: 5px;
+                top: 5px;
+              }
+            }
+            &:nth-of-type(15n) {
+              &::before {
+                width: 50%;
+              }
+            }
+            &:nth-of-type(15n + 1) {
+              &::before {
+                width: 50%;
+                left: 10px;
+              }
+            }
+          }
+          .win span {
+            background-color: aqua!important;
+          }
+        }
+        .player-bar {
+          display: flex;
+          justify-content: space-between;
+          padding: 0 10px;
+          & div {
+            height: 18px;
+            line-height: 18px;
+            border: 1px solid var(--color);
+            border-radius: 2px;
+            padding: 0 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: gray;
+          }
+          .player[data-color="0"],
+          .player[data-color="1"] {
+            padding-left: 20px;
+            position: relative;
+            &::before {
+              content: "";
+              position: absolute;
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              top: 5px;
+              left: 5px;
+            }
+          }
+          .player[data-color="0"]::before {
+            background-color: black;
+            border: 1px solid var(--color);
+          }
+          .player[data-color="1"]::before {
+            background-color: white;
+            border: 1px solid var(--color);
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <div class="player-bar">
+        <div class="player" id="oneself" data-ready="0" data-color="" onclick="ready()"></div>
+        <div class="player" id="another" data-ready="0">...</div>
+      </div>
+      <div class="chess-panel" onclick="drop(event)">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div><i class="circle2"></i></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div><i class="circle2"></i></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div><i class="circle1"></i></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div><i class="circle2"></i></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div><i class="circle2"></i></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+    <script>
+      let isMyTurn = null;
+
+      // 获取 name
+      const [, name] = location.search.match(/\?name=(.*)/);
+      document.getElementById("oneself").innerText = name + "(未准备)";
+
+      // 设置棋盘落点 index 信息
+      const points = document.querySelectorAll(".chess-panel > div");
+      points.forEach((point, index) => {
+        point.setAttribute("data-index", index);
+      });
+
+      // 创建 WebSocket 连接
+      const ws = new WebSocket("ws://127.0.0.1:1997");
+      ws.onopen = function () {
+        ws.send(JSON.stringify({ ev: "ENTER", data: name }));
+      };
+      ws.onmessage = function (e) {
+        const { ev, data } = JSON.parse(e.data);
+        switch (ev) {
+          case "ONESELF":
+            const p1 = document.querySelector("#oneself");
+            p1.innerText = data.name ? `${data.name + (data.ready ? "(准备)" : "(未准备)")}` : "...";
+            p1.setAttribute("data-ready", data.ready);
+            p1.setAttribute("data-color", data.color ?? "");
+            break;
+          case "ANOTHER":
+            const p2 = document.querySelector("#another");
+            p2.innerText = data.name ? `${data.name + (data.ready ? "(准备)" : "(未准备)")}` : "...";
+            p2.setAttribute("data-ready", data.ready);
+            break;
+          case "START":
+            isMyTurn = document.querySelector("#oneself").getAttribute("data-color") == 0;
+            break;
+          case "DROP":
+            points[data.index].innerHTML = "<span class='c" + data.color + "'></span>";
+            isMyTurn = !isMyTurn;
+            break;
+          case "WIN":
+            isMyTurn = null;
+            data.points.forEach((idx) => points[idx].classList.add("win"));
+            break;
+        }
+      };
+
+      function ready() {
+        if (isMyTurn !== null) return void 0;
+        const ready = document.querySelector("#oneself").getAttribute("data-ready");
+        ws.send(JSON.stringify({ ev: "READY", data: ready ^ 1 }));
+      }
+
+      function drop(ev) {
+        if (isMyTurn === null || !isMyTurn) return void 0;
+        if (ev.target.childNodes?.[0]?.tagName === "SPAN") return void 0;
+        const index = ev.target.getAttribute("data-index");
+        ws.send(JSON.stringify({ ev: "DROP", data: index }));
+      }
+    </script>
+  </body>
+</html>
