@@ -63,22 +63,19 @@ export default class Snake {
   head;
 
   /**
-   * snake 尾部节点
-   * @type {SnakeNode}
-   */
-  tail;
-
-  /**
-   * 小球坐标
+   * 食物坐标
    * @type {Coord}
    */
-  ball;
+  food;
 
   /**
-   * 二维数组: 映射每个交点坐标的信息; 1: Snake 2: 小球
-   * @type {Array<Array>}
+   * 移动的偏移量 offset
+   * @type {{x: -1|0|1, y: -1|0|1}}
    */
-  indexMap = [];
+  offset;
+
+  /** 定时器 */
+  drawTimer;
 
   /** @constructor */
   constructor(ctx, showLine = false) {
@@ -101,19 +98,17 @@ export default class Snake {
     this.head = {
       x: this.pxToCoord(this.size.w / 2),
       y: this.pxToCoord(this.size.h / 2),
-      next: (this.tail = { x: this.pxToCoord(this.size.w / 2) - 1, y: this.pxToCoord(this.size.h / 2), next: null }),
+      next: { x: this.pxToCoord(this.size.w / 2) - 1, y: this.pxToCoord(this.size.h / 2), next: null },
     };
 
-    this.initIndexMap();
-
-    // this.ball = { x: 3, y: 3 };
+    this.offset = { x: this.head.x - this.head.next.x, y: this.head.y - this.head.next.y };
   }
 
   draw() {
     this.ctx.clearRect(0, 0, this.size.w, this.size.h);
-    this.drawLine();
-    this.drawSnake();
-    this.drawBall();
+    this.#drawLine();
+    this.#drawSnake();
+    this.#drawFood();
   }
 
   // 设置状态
@@ -128,44 +123,82 @@ export default class Snake {
     }
   }
 
+  // 方向
+  directionTo(code) {
+    let offset;
+    if (code === 38) offset = { x: 0, y: -1 }; // 上
+    if (code === 40) offset = { x: 0, y: 1 }; // 下
+    if (code === 37) offset = { x: -1, y: 0 }; // 左
+    if (code === 39) offset = { x: 1, y: 0 }; // 右
+    if (offset.x + this.offset.x === 0) return void 0;
+    this.offset = offset;
+  }
+
+  pause() {
+    clearTimeout(this.drawTimer);
+  }
+
+  over() {
+    alert("You lose!");
+  }
+
   start() {
-    this.move();
-  }
+    this.setFood();
+    
+    let newHeadCoord = { x: this.head.x + this.offset.x, y: this.head.y + this.offset.y };
+    // 如果吃到食物，只需要更新 head
+    if (newHeadCoord.x === this.food.x && newHeadCoord.y === this.food.y) {
+      this.food = null;
+      this.head = { ...newHeadCoord, next: this.head };
+    } else {
+      // 更新尾部节点
+      this.cutTail(this.head);
 
-  pause() {}
-
-  over() {}
-
-  move() {
-    let offsetX = this.head.x - this.head.next.x;
-    let offsetY = this.head.y - this.head.next.y;
-    let nextHeadX = this.head.x + offsetX;
-    let nextHeadY = this.head.y + offsetY;
-    if (nextHeadX > this.maxX || nextHeadY > this.maxY) return void this.over();
-
-    let tail = setTimeout(this.move, 1500);
-  }
-
-  initIndexMap() {
-    let current = this.head;
-    while (current) {
-      (this.indexMap[current.x] = this.indexMap[current.x] || [])[current.y] = 1;
-      current = current.next;
+      // 判断新的 head 节点是否合法，否则结束
+      if (this.isValidateCoord(newHeadCoord)) {
+        this.head = { ...newHeadCoord, next: this.head };
+      } else {
+        return this.over();
+      }
     }
+
+    this.draw();
+
+    this.drawTimer = setTimeout(() => this.start(), 500);
+  }
+
+  // 设置食物
+  setFood() {
+    if (this.food) return void 0;
+    let foodCoord = { x: Math.round(Math.random() * this.maxX), y: Math.round(Math.random() * this.maxY) };
+    if (this.isValidateCoord(foodCoord)) {
+      this.food = foodCoord;
+    } else {
+      this.setFood();
+    }
+  }
+
+  cutTail(node) {
+    if (node.next && !node.next.next) return void (node.next = null);
+    return this.cutTail(node.next);
   }
 
   // 校验一个 coord 坐标是否合法
   isValidateCoord(coord) {
     const { x, y } = coord;
-    if (x < 0 || y < 0 || x > this.maxX || y > this.maxY) return console.warn("超出合法边界"), false;
-    if (this.indexMap[x]?.[y]) {
-      // TODO: snake 开始移动 move(); 校验下一个 head 坐标是否合法，处理 next 是 tail 的情况
+    if (x < 0 || y < 0 || x > this.maxX || y > this.maxY) return false;
+
+    let flag = true;
+    let current = this.head;
+    while (current) {
+      if (current.x === x && current.y === y) flag = false;
+      current = current.next;
     }
-    return true;
+    return flag;
   }
 
   // 绘制 snake
-  drawSnake() {
+  #drawSnake() {
     // begin
     this.ctx.beginPath();
 
@@ -191,18 +224,18 @@ export default class Snake {
     this.ctx.closePath();
   }
 
-  // 绘制小球
-  drawBall() {
-    if (!this.ball) return void 0;
+  // 绘制食物
+  #drawFood() {
+    if (!this.food) return void 0;
     this.ctx.fillStyle = "#666";
     this.ctx.beginPath();
-    this.ctx.arc(this.coordToPx(this.ball.x), this.coordToPx(this.ball.y), this.unit / 2, 0, Math.PI * 2, true);
+    this.ctx.arc(this.coordToPx(this.food.x), this.coordToPx(this.food.y), this.unit / 2, 0, Math.PI * 2, true);
     this.ctx.fill();
     this.ctx.closePath();
   }
 
   // 绘制坐标辅助线，每个交点是一个坐标
-  drawLine() {
+  #drawLine() {
     if (!this.showLine) return void 0;
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 0.1;

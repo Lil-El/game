@@ -53,6 +53,11 @@
         // 设置 snake 状态
         snake.statusTo(status);
       });
+
+      // 操作方向: 设置 snake 移动方向
+      $(document).keydown((evt) => {
+        snake.directionTo(evt.keyCode);
+      });
     </script>
   </body>
 </html>
