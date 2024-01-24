@@ -114,7 +114,7 @@
             }
           }
           .win span {
-            background-color: aqua!important;
+            background-color: aqua !important;
           }
         }
         .player-bar {
@@ -433,6 +433,7 @@
           case "WIN":
             isMyTurn = null;
             data.points.forEach((idx) => points[idx].classList.add("win"));
+            alert(data.name + "win!");
             break;
         }
       };

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src=""></script>
+    <style>
+      * {
+        padding: 20px;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .operate-bar #status {
+        border: 1px solid #eee;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+      #map {
+        border: 1px solid #ddd;
+        border-radius: 2px;
+        margin: 0 auto;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="operate-bar">
+      <div id="status" data-status="-1" description="0: 进行中, 1: 暂停中">Start</div>
+    </div>
+    <canvas id="map" width="660" height="360"></canvas>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script type="module">
+      import Snake from "./snake.js";
+
+      let snake = new Snake(document.getElementById("map").getContext("2d"), true);
+
+      // 按钮点击事件: 设置 snake 状态
+      $("#status").click((evt) => {
+        const STATUS_MAP = ["Running", "Paused"];
+
+        // 获取转变后的状态
+        const status = $(evt.target).attr("data-status") == -1 ? 0 : $(evt.target).attr("data-status") ^ 1;
+
+        // 保存转变后的状态给 data-status 属性
+        $(evt.target).attr("data-status", status).text(STATUS_MAP[status]);
+
+        // 设置 snake 状态
+        snake.statusTo(status);
+      });
+    </script>
+  </body>
+</html>
