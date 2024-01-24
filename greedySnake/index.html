@@ -38,7 +38,10 @@
     <script type="module">
       import Snake from "./snake.js";
 
-      let snake = new Snake(document.getElementById("map").getContext("2d"), true);
+      let snake = new Snake(document.getElementById("map").getContext("2d"), {
+        showLine: true,
+        fluency: true
+      });
 
       // 按钮点击事件: 设置 snake 状态
       $("#status").click((evt) => {

@@ -31,6 +31,12 @@ export default class Snake {
   showLine;
 
   /**
+   * 是否开启流畅
+   * @type {Boolean}
+   */
+  fluency;
+
+  /**
    * 相邻交点之间的距离（也是: 蛇移动的最小步长 和 蛇的宽度）
    * @constant
    * @type {12}
@@ -74,13 +80,11 @@ export default class Snake {
    */
   offset;
 
-  /** 定时器 */
-  drawTimer;
-
   /** @constructor */
-  constructor(ctx, showLine = false) {
+  constructor(ctx, options = {}) {
     this.ctx = ctx;
-    this.showLine = showLine;
+    this.showLine = options.showLine || false;
+    this.fluency = options.fluency || false;
 
     this.init();
     this.draw();
@@ -107,7 +111,7 @@ export default class Snake {
   draw() {
     this.ctx.clearRect(0, 0, this.size.w, this.size.h);
     this.#drawLine();
-    this.#drawSnake();
+    this.#drawSnake(...arguments);
     this.#drawFood();
   }
 
@@ -115,36 +119,35 @@ export default class Snake {
   statusTo(status) {
     this.status = status;
     if (status === 0) {
-      // 开始
-      this.start();
-    } else if (status === 1) {
-      // 暂停
-      this.pause();
+      if (this.fluency) this.start();
+      else this.start1();
     }
   }
 
   // 方向
   directionTo(code) {
     let offset;
-    if (code === 38) offset = { x: 0, y: -1 }; // 上
-    if (code === 40) offset = { x: 0, y: 1 }; // 下
-    if (code === 37) offset = { x: -1, y: 0 }; // 左
-    if (code === 39) offset = { x: 1, y: 0 }; // 右
-    if (offset.x + this.offset.x === 0) return void 0;
-    this.offset = offset;
-  }
 
-  pause() {
-    clearTimeout(this.drawTimer);
+    if (code === 38) offset = { x: 0, y: -1 }; // 上
+    else if (code === 40) offset = { x: 0, y: 1 }; // 下
+    else if (code === 37) offset = { x: -1, y: 0 }; // 左
+    else if (code === 39) offset = { x: 1, y: 0 }; // 右
+    else return void 0;
+
+    if (offset.x + this.offset.x === 0) return void 0;
+    
+    this.offset = offset;
   }
 
   over() {
     alert("You lose!");
   }
 
-  start() {
+  start1() {
+    if (this.status !== 0) return void 0;
+
     this.setFood();
-    
+
     let newHeadCoord = { x: this.head.x + this.offset.x, y: this.head.y + this.offset.y };
     // 如果吃到食物，只需要更新 head
     if (newHeadCoord.x === this.food.x && newHeadCoord.y === this.food.y) {
@@ -164,7 +167,48 @@ export default class Snake {
 
     this.draw();
 
-    this.drawTimer = setTimeout(() => this.start(), 500);
+    setTimeout(() => this.start1(), 500);
+  }
+
+  start() {
+    if (this.status !== 0) return void 0;
+
+    this.setFood();
+
+    let lastHead = JSON.parse(JSON.stringify(this.head));
+
+    let newHeadCoord = { x: this.head.x + this.offset.x, y: this.head.y + this.offset.y };
+    // 如果吃到食物，只需要更新 head
+    if (newHeadCoord.x === this.food.x && newHeadCoord.y === this.food.y) {
+      this.food = null;
+      lastHead = { ...lastHead, next: lastHead };
+      this.head = { ...newHeadCoord, next: this.head };
+    } else {
+      // 更新尾部节点
+      this.cutTail(this.head);
+
+      // 判断新的 head 节点是否合法，否则结束
+      if (this.isValidateCoord(newHeadCoord)) {
+        this.head = { ...newHeadCoord, next: this.head };
+      } else {
+        return this.over();
+      }
+    }
+
+    let offsetPx = this.unit;
+
+    let animate = () => {
+      requestAnimationFrame(() => {
+        this.draw(lastHead, (offsetPx = offsetPx - 1));
+
+        if (offsetPx <= 0) {
+          this.start();
+        } else {
+          animate();
+        }
+      });
+    };
+    animate();
   }
 
   // 设置食物
@@ -198,26 +242,38 @@ export default class Snake {
   }
 
   // 绘制 snake
-  #drawSnake() {
+  #drawSnake(lastHead, offsetPx) {
+    offsetPx = (offsetPx ?? 0) <= 0 ? 0 : offsetPx ?? 0;
+    lastHead = lastHead ?? this.head;
+
     // begin
     this.ctx.beginPath();
-
-    // 绘制身体
     this.ctx.fillStyle = "#000";
+
     let current = this.head;
+    let last = lastHead;
+
     while (current) {
       this.ctx.fillRect(
-        this.coordToPx(current.x) - this.unit / 2,
-        this.coordToPx(current.y) - this.unit / 2,
+        this.coordToPx(current.x) - this.unit / 2 + (last.x - current.x) * offsetPx,
+        this.coordToPx(current.y) - this.unit / 2 + (last.y - current.y) * offsetPx,
         this.unit,
         this.unit
       );
       current = current.next;
+      last = last.next;
     }
 
     // 绘制头部标记
     this.ctx.fillStyle = "#fff";
-    this.ctx.arc(this.coordToPx(this.head.x), this.coordToPx(this.head.y), this.unit / 2 / 2, 0, Math.PI * 2, true);
+    this.ctx.arc(
+      this.coordToPx(this.head.x) + (lastHead.x - this.head.x) * offsetPx,
+      this.coordToPx(this.head.y) + (lastHead.y - this.head.y) * offsetPx,
+      this.unit / 2 / 2,
+      0,
+      Math.PI * 2,
+      true
+    );
     this.ctx.fill();
 
     // end
