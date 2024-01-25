@@ -31,6 +31,12 @@ export default class Snake {
   showLine;
 
   /**
+   * 偏移辅助线
+   * @type {Number}
+   */
+  offsetLine;
+
+  /**
    * 是否开启流畅
    * @type {Boolean}
    */
@@ -84,6 +90,7 @@ export default class Snake {
   constructor(ctx, options = {}) {
     this.ctx = ctx;
     this.showLine = options.showLine || false;
+    this.offsetLine = options.offsetLine ? 1 : 0.5;
     this.fluency = options.fluency || false;
 
     this.init();
@@ -135,7 +142,7 @@ export default class Snake {
     else return void 0;
 
     if (offset.x + this.offset.x === 0) return void 0;
-    
+
     this.offset = offset;
   }
 
@@ -296,15 +303,15 @@ export default class Snake {
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 0.1;
     this.ctx.beginPath();
-    
+
     // PS: unit/2时，每个交点就是一个方块的中心；unit时，偏移了一半，让每一个方块都位于格子中
     // 绘制垂直的线
-    for (let c = this.unit / 2; c <= this.size.w; c += this.unit) {
+    for (let c = this.unit * this.offsetLine; c <= this.size.w; c += this.unit) {
       this.ctx.moveTo(c, 0);
       this.ctx.lineTo(c, this.size.h);
     }
     // 绘制水平的线
-    for (let r = this.unit / 2; r <= this.size.h; r += this.unit) {
+    for (let r = this.unit * this.offsetLine; r <= this.size.h; r += this.unit) {
       this.ctx.moveTo(0, r);
       this.ctx.lineTo(this.size.w, r);
     }
