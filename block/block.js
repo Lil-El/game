@@ -99,8 +99,6 @@ export default class Block {
   statusTo(status) {
     this.status = status;
     if (status === 0) {
-      this.graph = this.getGraph();
-
       this.start();
     } else {
       clearTimeout(this.drawTimer);
@@ -108,24 +106,28 @@ export default class Block {
   }
 
   operate(code) {
-    if (code === 32) {
-      // 空格键
-      // this.rotateGraph();
-    } else if (code === 40) {
-      // 下
-    } else if (code === 37) {
-      // 左
-    } else if (code === 39) {
-      // 右
-    }
+    if (this.status !== 0 || !this.graph) return void 0;
+
+    if (code === 32) this.rotateGraph(); // 空格键
+    if (code === 40) this.translateGraph(this.graph, [0, 1]); // 下
+    if (code === 37) this.translateGraph(this.graph, [-1, 0]); // 左
+    if (code === 39) this.translateGraph(this.graph, [1, 0]); // 右
   }
 
   start() {
+    this.getGraph();
+
     if (this.status !== 0) return void 0;
 
     this.draw();
 
-    this.drawTimer = setTimeout(() => this.start(), 500);
+    if (Math.max(...this.graph.map(([_, y]) => y)) >= this.maxY) {
+      this.graph = null;
+    } else {
+      this.translateGraph(this.graph, [0, 1]);
+    }
+
+    this.drawTimer = setTimeout(() => this.start(), 700);
   }
 
   // 校验一个 coord 坐标是否合法
@@ -143,13 +145,54 @@ export default class Block {
   }
 
   getGraph() {
+    if (this.graph) return void 0;
     let graph = this.graphProvider.fetchGraph();
 
-    // 校准 graph 坐标
-    let offsetX = 0 - Math.floor(this.maxX / 2);
-    let offsetY = Math.min(0, ...graph.map(([_, y]) => y));
+    // 将 原本graph 的相对坐标和当前的坐标叠加后进行移动
+    let offsetX = Math.floor(this.maxX / 2);
+    let offsetY = 0 - Math.min(0, ...graph.map(([_, y]) => y));
 
-    return this.graphProvider.translateGraph(graph, [offsetX, offsetY]);
+    this.graph = this.graphProvider.translateGraph(graph, [offsetX, offsetY]);
+  }
+
+  rotateGraph() {
+    let offset = this.graph[0].map((v) => -v);
+
+    // 获取 graph 相对坐标
+    let graph = this.graphProvider.translateGraph(this.graph, offset);
+
+    // 旋转
+    graph = this.graphProvider.rotateGraph(graph);
+
+    // 将 graph 移动至绝对坐标位置
+    this.translateGraph(
+      graph,
+      offset.map((v) => -v)
+    );
+  }
+
+  translateGraph(graph, offset) {
+    let unAdjustGraphic = this.graphProvider.translateGraph(graph, offset);
+    this.graph = this.adjustGraph(unAdjustGraphic);
+  }
+
+  adjustGraph(graph) {
+    let minX = Math.min(...graph.map(([x, _]) => x));
+    let minY = Math.min(...graph.map(([_, y]) => y));
+    let maxX = Math.max(...graph.map(([x, _]) => x));
+    let maxY = Math.max(...graph.map(([_, y]) => y));
+
+    if (minX < 0) {
+      return this.graphProvider.translateGraph(graph, [0 - minX, 0]);
+    } else if (maxX > this.maxX) {
+      return this.graphProvider.translateGraph(graph, [this.maxX - maxX, 0]);
+    } else if (maxY > this.maxY) {
+      return this.graphProvider.translateGraph(graph, [0, this.maxY - maxY]);
+    } else if (minY < 0) {
+      return this.graphProvider.translateGraph(graph, [0, 0 - minY]);
+    }
+
+    return graph;
   }
 
   // 绘制

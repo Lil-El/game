@@ -160,7 +160,7 @@ export default class Graph {
   }
 
   /**
-   * 旋转图形
+   * 以相对坐标进行图形旋转
    * @param {Array<Array<Number>>} graph 图形坐标
    * @param {0|1|2|3} num 旋转 90deg 的次数
    */
@@ -174,9 +174,6 @@ export default class Graph {
   }
 
   translateGraph(graph, offset) {
-    if (offset[0] < 0 || offset[1] < 0) {
-      return graph.map(([x, y]) => [x - offset[0], y - offset[1]]);
-    }
-    return graph;
+    return graph.map(([x, y]) => [x + offset[0], y + offset[1]]);
   }
 }
