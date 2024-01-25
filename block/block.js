@@ -18,6 +18,12 @@ export default class Block {
   showLine;
 
   /**
+   * 辅助线偏移
+   * @type {Number}
+   */
+  offsetLine;
+
+  /**
    * 相邻交点之间的距离（也是: 蛇移动的最小步长 和 蛇的宽度）
    * @constant
    * @type {12}
@@ -43,10 +49,27 @@ export default class Block {
    */
   status = 1;
 
+  /**
+   * @type {import(./graph.js).default}
+   */
+  graphProvider;
+
+  /**
+   * 当前图形
+   * @type {Array<Array<Number>>}
+   */
+  graph;
+
+  blockMap = [];
+
+  drawTimer;
+
   /** @constructor */
   constructor(ctx, options = {}) {
     this.ctx = ctx;
+    this.graphProvider = options.graphProvider;
     this.showLine = options.showLine || false;
+    this.offsetLine = options.offsetLine ? 1 : 0.5;
 
     this.init();
     this.draw();
@@ -60,7 +83,6 @@ export default class Block {
 
     this.maxX = this.pxToCoord(this.size.w);
     this.maxY = this.pxToCoord(this.size.h);
-
   }
 
   draw() {
@@ -73,9 +95,19 @@ export default class Block {
   statusTo(status) {
     this.status = status;
     if (status === 0) {
-      if (this.fluency) this.start();
-      else this.start1();
+      this.graph = JSON.parse(JSON.stringify(this.graphProvider.graph));
+      this.graphProvider.createGraph();
+
+      this.start();
+    } else {
+      clearTimeout(this.drawTimer)
     }
+  }
+
+  start() {
+    if (this.status !== 0) return void 0;
+
+    this.drawTimer = setTimeout(() => this.start(), 500);
   }
 
   // 校验一个 coord 坐标是否合法
@@ -94,7 +126,7 @@ export default class Block {
 
   // 绘制
   #drawBlock() {
-    return 
+    return;
     // begin
     this.ctx.beginPath();
     this.ctx.fillStyle = "#000";
@@ -113,14 +145,7 @@ export default class Block {
     }
 
     this.ctx.fillStyle = "#fff";
-    this.ctx.arc(
-      this.coordToPx(this.head.x),
-      this.coordToPx(this.head.y),
-      this.unit / 2 / 2,
-      0,
-      Math.PI * 2,
-      true
-    );
+    this.ctx.arc(this.coordToPx(this.head.x), this.coordToPx(this.head.y), this.unit / 2 / 2, 0, Math.PI * 2, true);
     this.ctx.fill();
 
     // end
@@ -137,12 +162,12 @@ export default class Block {
 
     // PS: unit/2时，每个交点就是一个方块的中心；unit时，偏移了一半，让每一个方块都位于格子中
     // 绘制垂直的线
-    for (let c = this.unit / 2; c <= this.size.w; c += this.unit) {
+    for (let c = this.unit * this.offsetLine; c <= this.size.w; c += this.unit) {
       this.ctx.moveTo(c, 0);
       this.ctx.lineTo(c, this.size.h);
     }
     // 绘制水平的线
-    for (let r = this.unit / 2; r <= this.size.h; r += this.unit) {
+    for (let r = this.unit * this.offsetLine; r <= this.size.h; r += this.unit) {
       this.ctx.moveTo(0, r);
       this.ctx.lineTo(this.size.w, r);
     }

@@ -15,6 +15,10 @@
         align-items: flex-start;
         gap: 20px;
         padding: 40px;
+        div {
+          border: 1px solid #ccc;
+          padding: 10px 20px;
+        }
         canvas {
           border: 1px solid #ccc;
         }
@@ -22,16 +26,33 @@
     </style>
   </head>
   <body>
+    <div id="status" data-status="-1" description="0: 进行中, 1: 暂停中">Start</div>
+
     <canvas id="block" width="324" height="504"></canvas>
-    <canvas id="graph" width="120" height="120"></canvas>
+    <canvas id="subBlock" width="120" height="120"></canvas>
 
     <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script type="module">
       import Block from "./block.js";
       import Graph from "./graph.js";
 
+      const graphProvider = new Graph($("#subBlock")[0].getContext("2d"));
+
       const block = new Block($("#block")[0].getContext("2d"), {
+        graphProvider,
         showLine: true,
+        offsetLine: false,
+      });
+
+      $("#status").click((evt) => {
+        const STATUS_MAP = ["Running", "Paused"];
+        const status = $(evt.target).attr("data-status") == -1 ? 0 : $(evt.target).attr("data-status") ^ 1;
+        $(evt.target).attr("data-status", status).text(STATUS_MAP[status]);
+        block.statusTo(status);
+      });
+
+      $(document).keydown((evt) => {
+        // snake.directionTo(evt.keyCode);
       });
     </script>
   </body>
