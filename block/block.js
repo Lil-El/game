@@ -60,6 +60,9 @@ export default class Block {
    */
   graph;
 
+  /**
+   * 界面所有坐标点的信息，0空白、1固定的方块、2可移动的方块
+   */
   blockMap = [];
 
   drawTimer;
@@ -89,23 +92,38 @@ export default class Block {
     this.ctx.clearRect(0, 0, this.size.w, this.size.h);
     this.#drawLine();
     this.#drawBlock();
+    this.#drawGraph();
   }
 
   // 设置状态
   statusTo(status) {
     this.status = status;
     if (status === 0) {
-      this.graph = JSON.parse(JSON.stringify(this.graphProvider.graph));
-      this.graphProvider.createGraph();
+      this.graph = this.getGraph();
 
       this.start();
     } else {
-      clearTimeout(this.drawTimer)
+      clearTimeout(this.drawTimer);
+    }
+  }
+
+  operate(code) {
+    if (code === 32) {
+      // 空格键
+      // this.rotateGraph();
+    } else if (code === 40) {
+      // 下
+    } else if (code === 37) {
+      // 左
+    } else if (code === 39) {
+      // 右
     }
   }
 
   start() {
     if (this.status !== 0) return void 0;
+
+    this.draw();
 
     this.drawTimer = setTimeout(() => this.start(), 500);
   }
@@ -124,31 +142,60 @@ export default class Block {
     return flag;
   }
 
+  getGraph() {
+    let graph = this.graphProvider.fetchGraph();
+
+    // 校准 graph 坐标
+    let offsetX = 0 - Math.floor(this.maxX / 2);
+    let offsetY = Math.min(0, ...graph.map(([_, y]) => y));
+
+    return this.graphProvider.translateGraph(graph, [offsetX, offsetY]);
+  }
+
   // 绘制
-  #drawBlock() {
-    return;
-    // begin
+  #drawGraph() {
+    if (!this.graph) return void 0;
+
     this.ctx.beginPath();
+    this.ctx.lineWidth = 0.5;
     this.ctx.fillStyle = "#000";
+    this.ctx.strokeStyle = "#ddd";
 
-    let current = this.head;
-
-    while (current) {
-      this.ctx.fillRect(
-        this.coordToPx(current.x) - this.unit / 2,
-        this.coordToPx(current.y) - this.unit / 2,
+    let index = 0;
+    while (this.graph[index]) {
+      let args = [
+        this.coordToPx(this.graph[index][0]) - this.unit / 2,
+        this.coordToPx(this.graph[index][1]) - this.unit / 2,
         this.unit,
-        this.unit
-      );
-      current = current.next;
-      last = last.next;
+        this.unit,
+      ];
+
+      this.ctx.fillRect(...args);
+      this.ctx.strokeRect(...args);
+
+      index++;
     }
 
-    this.ctx.fillStyle = "#fff";
-    this.ctx.arc(this.coordToPx(this.head.x), this.coordToPx(this.head.y), this.unit / 2 / 2, 0, Math.PI * 2, true);
-    this.ctx.fill();
+    this.ctx.closePath();
+  }
 
-    // end
+  #drawBlock() {
+    this.ctx.beginPath();
+    this.ctx.lineWidth = 0.5;
+    this.ctx.fillStyle = "#000";
+    this.ctx.strokeStyle = "#ddd";
+
+    for (let i = 0; i <= this.maxX; i++) {
+      for (let j = 0; j <= this.maxY; j++) {
+        if (this.blockMap[i]?.[j]) {
+          let args = [this.coordToPx(i) - this.unit / 2, this.coordToPx(j) - this.unit / 2, this.unit, this.unit];
+
+          this.ctx.fillRect(...args);
+          this.ctx.strokeRect(...args);
+        }
+      }
+    }
+
     this.ctx.closePath();
   }
 

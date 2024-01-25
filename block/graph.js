@@ -17,19 +17,6 @@ export default class Graph {
   unit = 18;
 
   /**
-   * 最大的 x 的坐标值
-   * @constant
-   * @type {Number}
-   */
-  maxX;
-  /**
-   * 最大的 y 的坐标值
-   * @constant
-   * @type {Number}
-   */
-  maxY;
-
-  /**
    * 当前图形
    * @type {Array<Array<Number>>}
    */
@@ -48,9 +35,6 @@ export default class Graph {
       w: this.ctx.canvas.width,
       h: this.ctx.canvas.height,
     };
-
-    this.maxX = this.pxToCoord(this.size.w);
-    this.maxY = this.pxToCoord(this.size.h);
 
     this.graph = this.createGraph();
   }
@@ -135,18 +119,11 @@ export default class Graph {
     return this.rotateGraph(graph, Math.floor(Math.random() * 4));
   }
 
-  // 校验一个 coord 坐标是否合法
-  isValidateCoord(coord) {
-    const { x, y } = coord;
-    if (x < 0 || y < 0 || x > this.maxX || y > this.maxY) return false;
-
-    let flag = true;
-    let current = this.head;
-    while (current) {
-      if (current.x === x && current.y === y) flag = false;
-      current = current.next;
-    }
-    return flag;
+  fetchGraph() {
+    const graph = JSON.parse(JSON.stringify(this.graph));
+    this.graph = this.createGraph();
+    this.draw();
+    return graph;
   }
 
   // 以 graph 的中心点绘制
@@ -182,16 +159,6 @@ export default class Graph {
     this.ctx.closePath();
   }
 
-  // Coord 坐标数值转 Px 像素值
-  coordToPx(value) {
-    return this.unit / 2 + value * this.unit;
-  }
-
-  // 与 coordToPx 相反
-  pxToCoord(value) {
-    return Math.floor((value - this.unit / 2) / this.unit);
-  }
-
   /**
    * 旋转图形
    * @param {Array<Array<Number>>} graph 图形坐标
@@ -207,8 +174,9 @@ export default class Graph {
   }
 
   translateGraph(graph, offset) {
-    if (offset.x < 0 || offset.y < 0) {
-      return graph.map(([x, y]) => [x - offset.x, y - offset.y]);
+    if (offset[0] < 0 || offset[1] < 0) {
+      return graph.map(([x, y]) => [x - offset[0], y - offset[1]]);
     }
+    return graph;
   }
 }
