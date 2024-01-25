@@ -296,6 +296,8 @@ export default class Snake {
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 0.1;
     this.ctx.beginPath();
+    
+    // PS: unit/2时，每个交点就是一个方块的中心；unit时，偏移了一半，让每一个方块都位于格子中
     // 绘制垂直的线
     for (let c = this.unit / 2; c <= this.size.w; c += this.unit) {
       this.ctx.moveTo(c, 0);

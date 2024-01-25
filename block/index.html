@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 40px;
+        canvas {
+          border: 1px solid #ccc;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="block" width="324" height="504"></canvas>
+    <canvas id="graph" width="120" height="120"></canvas>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script type="module">
+      import Block from "./block.js";
+      import Graph from "./graph.js";
+
+      const block = new Block($("#block")[0].getContext("2d"), {
+        showLine: true,
+      });
+    </script>
+  </body>
+</html>
