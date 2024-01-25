@@ -44,13 +44,10 @@ export default class Graph {
     this.#drawGraph();
   }
 
-  /**
-   * 创建图形
-   * @param {Number} graphType 7种类型
-   * 1. 方形  2. 直线型  3. 左拐  4. 右拐  5. 凸形  6. 左 L  7. 右 L
-   */
-  createGraph(type) {
-    let graphType = type || Math.floor(Math.random() * 6 + 1);
+  // 创建图形
+  createGraph() {
+    // 1. 方形  2. 直线型  3. 左拐  4. 右拐  5. 凸形  6. 左 L  7. 右 L
+    let graphType = Math.floor(Math.random() * 6 + 1);
     let graph;
 
     // 创建基础图形
