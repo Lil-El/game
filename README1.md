@@ -7,3 +7,4 @@
 1. [Gomoku 五子棋](./gomoku/)
 2. [Greedy Snake 贪吃蛇](./greedySnake/)
 3. [Block 俄罗斯方块](./block/)
+4. [Chess 中国象棋](./chess/)
