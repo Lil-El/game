@@ -1,11 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-  
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+      }
+      canvas {
+        margin: 100px auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <span>玩家：</span>
+      <span id="players"></span>
+    </div>
+    <canvas id="chess" width="450" height="500"></canvas>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+    <script type="module">
+      import Chess from "./chess.js";
+
+      let isMyTurn = false;
+      let chessMap = [];
+
+      const chess = new Chess($("#chess")[0].getContext("2d"), chessMap);
+
+      // 获取 name
+      const [, name] = location.search.match(/\?name=(.*)/);
+
+      // 创建 WebSocket 连接
+      const ws = new WebSocket("ws://127.0.0.1:1997");
+
+      ws.onopen = function () {
+        ws.send(JSON.stringify({ ev: "ENTER", data: name }));
+      };
+      ws.onmessage = function (e) {
+        const { ev, data } = JSON.parse(e.data);
+        switch (ev) {
+          case "PLAYER":
+            $("#players").text(
+              `${data[0].name}(${data[0].color === 0 ? "黑" : "红"}) / ${
+                data[1] ? `${data[1].name}(${data[1].color === 0 ? "黑" : "红"})` : ""
+              }`
+            );
+            break;
+          case "TURN":
+            isMyTurn = data === name;
+            break;
+          case "CHESS":
+            chessMap = data;
+            break;
+        }
+      };
+    </script>
+  </body>
 </html>
