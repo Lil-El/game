@@ -15,8 +15,10 @@
         justify-content: center;
         align-items: center;
         gap: 20px;
+        opacity: 0.04;
       }
       canvas {
+        border: 1px solid gray;
         margin: 100px auto;
       }
     </style>
@@ -34,15 +36,44 @@
       import Chess from "./chess.js";
 
       let isMyTurn = false;
-      let chessMap = [];
 
-      const chess = new Chess($("#chess")[0].getContext("2d"), chessMap);
+      const chess = new Chess($("#chess")[0].getContext("2d"));
 
       // 获取 name
       const [, name] = location.search.match(/\?name=(.*)/);
 
       // 创建 WebSocket 连接
       const ws = new WebSocket("ws://127.0.0.1:1997");
+
+      //
+      $("#chess").click((evt) => {
+        if (isMyTurn) {
+          let [x, y] = [chess.pxToCoord(evt.offsetX), chess.pxToCoord(evt.offsetY)];
+
+          if (chess.isPick()) {
+            const oneChess = chess.chessMap[x][y];
+            // 走
+            if (!oneChess) {
+              // 如果能走过去
+              if (chess.walk(x, y)) {
+                return ws.send(JSON.stringify({ ev: "CHESS", data: chess.chessMap }));
+              }
+            }
+            // 重新拿起
+            if (oneChess?.color === chess.getColor()) {
+              chess.pick(x, y);
+              return ws.send(JSON.stringify({ ev: "PICK", data: chess.chessMap }));
+            }
+            // 吃
+            if ((oneChess?.color === chess.getColor()) ^ 1) return chess.eat(x, y);
+          } else {
+            chess.pick(x, y);
+            return ws.send(JSON.stringify({ ev: "PICK", data: chess.chessMap }));
+          }
+        } else {
+          alert("轮不到你出手");
+        }
+      });
 
       ws.onopen = function () {
         ws.send(JSON.stringify({ ev: "ENTER", data: name }));
@@ -56,12 +87,13 @@
                 data[1] ? `${data[1].name}(${data[1].color === 0 ? "黑" : "红"})` : ""
               }`
             );
+            chess.setColor(data.find((p) => p.name === name).color);
             break;
           case "TURN":
-            isMyTurn = data === name;
+            isMyTurn = data === chess.getColor();
             break;
           case "CHESS":
-            chessMap = data;
+            chess.setChessMap(data);
             break;
         }
       };

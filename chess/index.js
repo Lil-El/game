@@ -3,6 +3,7 @@ const ws = require("nodejs-websocket");
 let server;
 let chessMap = [];
 let players = {};
+let currentColor = 0;
 
 const createPlayer = (conn) => {
   const count = Object.keys(players).length;
@@ -16,9 +17,33 @@ const createPlayer = (conn) => {
   return 1;
 };
 
-const unicast = (connection, data) => {
-  const msg = typeof data === "object" ? JSON.stringify(data) : data;
-  connection.sendText(msg);
+const createChessMap = (source) => {
+  for (let i = 0; i < 9; i++) {
+    source[i] = [];
+    for (let j = 0; j < 10; j++) {
+      source[i][j] = null;
+    }
+  }
+  // "车", "马", "象", "士", "将", "炮", "兵"
+  const chess = ["车", "马", "象", "士", "将"];
+  chess.forEach((text, index) => {
+    source[index][0] = { color: 1, type: index, text };
+    source[8 - index][0] = { color: 1, type: index, text };
+    source[index][9] = { color: 0, type: index, text };
+    source[8 - index][9] = { color: 0, type: index, text };
+  });
+
+  source[1][2] = { color: 1, type: 5, text: "炮" };
+  source[7][2] = { color: 1, type: 5, text: "炮" };
+  source[1][7] = { color: 0, type: 5, text: "炮" };
+  source[7][7] = { color: 0, type: 5, text: "炮" };
+
+  for (let i = 0; i < 9; i += 2) {
+    source[i][3] = { color: 1, type: 6, text: "兵" };
+    source[i][6] = { color: 0, type: 6, text: "兵" };
+  }
+
+  return source;
 };
 
 /**
@@ -57,16 +82,24 @@ server = ws.createServer(function (conn) {
         if (Object.keys(players).length === 2) {
           broadcast({
             ev: "TURN",
-            data:
-              Object.values(players)[0].color === 0 ? Object.values(players)[0].name : Object.values(players)[1].name,
+            data: currentColor,
           });
           broadcast({
             ev: "CHESS",
-            data: chessMap,
+            data: createChessMap(chessMap),
           });
         }
         break;
-        ``;
+      case "PICK":
+        broadcast({ ev: "CHESS", data });
+        break;
+      case "CHESS":
+        broadcast({
+          ev: "TURN",
+          data: (currentColor = currentColor ^ 1),
+        });
+        broadcast(msg);
+        break;
     }
   });
 
