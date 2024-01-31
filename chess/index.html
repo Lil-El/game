@@ -55,7 +55,7 @@
             // 走
             if (!oneChess) {
               // 如果能走过去
-              if (chess.walk(x, y)) {
+              if (chess.goto(x, y)) {
                 return ws.send(JSON.stringify({ ev: "CHESS", data: chess.chessMap }));
               }
             }
@@ -65,7 +65,12 @@
               return ws.send(JSON.stringify({ ev: "PICK", data: chess.chessMap }));
             }
             // 吃
-            if ((oneChess?.color === chess.getColor()) ^ 1) return chess.eat(x, y);
+            if ((oneChess?.color === chess.getColor()) ^ 1) {
+              // 如果能吃
+              if (chess.goto(x, y)) {
+                return ws.send(JSON.stringify({ ev: "CHESS", data: chess.chessMap }));
+              }
+            }
           } else {
             chess.pick(x, y);
             return ws.send(JSON.stringify({ ev: "PICK", data: chess.chessMap }));

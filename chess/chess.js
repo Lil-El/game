@@ -168,43 +168,51 @@ export default class Block {
     }
   }
 
-  // 走
-  walk(targetX, targetY) {
+  // 走 . 吃
+  goto(targetX, targetY) {
     const [originX, originY] = this.pickedCoord;
 
     const pickChess = this.chessMap[originX][originY];
 
     // 是否可以抵达目标位置
-    let noObstacle = false;
+    let isOK = false;
 
     // "车", "马", "象", "士", "将", "炮", "兵"
     switch (pickChess.type) {
       case 0:
       case 5:
+        let otherChessCount = 0;
         // 车、炮，只能在一条线上走
         if (originX === targetX) {
           // 判断路上是否有其他子
           let [minY, maxY] = [Math.min(originY, targetY), Math.max(originY, targetY)];
-          let y = minY;
-          for (y = minY + 1; y <= maxY - 1; y++) {
-            if (this.chessMap[targetX][y] !== null) break;
+          for (let y = minY + 1; y <= maxY - 1; y++) {
+            if (this.chessMap[targetX][y] !== null) otherChessCount++;
           }
 
           // 判断道路是否畅通
-          noObstacle = y === maxY;
+          isOK = otherChessCount === 0;
         } else if (originY === targetY) {
           // 判断路上是否有其他子
           let [minX, maxX] = [Math.min(originX, targetX), Math.max(originX, targetX)];
-          let x = minX;
-          for (x = minX + 1; x <= maxX - 1; x++) {
-            if (this.chessMap[x][targetY] !== null) break;
+          for (let x = minX + 1; x <= maxX - 1; x++) {
+            if (this.chessMap[x][targetY] !== null) otherChessCount++;
           }
 
           // 判断道路是否畅通
-          noObstacle = x === maxX;
+          isOK = otherChessCount === 0;
         } else {
           // 不在一条直线上
         }
+
+        // 炮吃
+        if (
+          pickChess.type === 5 &&
+          this.chessMap[targetX][targetY] &&
+          this.chessMap[targetX][targetY].color !== this.color
+        )
+          isOK = otherChessCount === 1;
+
         break;
       case 1:
         if (originX !== targetX && originY !== targetY) {
@@ -213,16 +221,16 @@ export default class Block {
           if (absX === 1 && absY === 2) {
             // 左下、右下
             if (targetY > originY) {
-              if (this.chessMap[originX][originY + 1] === null) noObstacle = true;
+              if (this.chessMap[originX][originY + 1] === null) isOK = true;
             } else {
               // 左上、右上
-              if (this.chessMap[originX][originY - 1] === null) noObstacle = true;
+              if (this.chessMap[originX][originY - 1] === null) isOK = true;
             }
           } else if (absX === 2 && absY === 1) {
             if (targetX > originX) {
-              if (this.chessMap[originX + 1][originY] === null) noObstacle = true;
+              if (this.chessMap[originX + 1][originY] === null) isOK = true;
             } else {
-              if (this.chessMap[originX - 1][originY] === null) noObstacle = true;
+              if (this.chessMap[originX - 1][originY] === null) isOK = true;
             }
           }
         }
@@ -232,7 +240,7 @@ export default class Block {
           let [absX, absY] = [Math.abs(targetX - originX), Math.abs(targetY - originY)];
           // 是否走的田
           if (absX === 2 && absY === 2) {
-            if (this.chessMap[(originX + targetX) / 2][(originY + targetY) / 2] === null) noObstacle = true;
+            if (this.chessMap[(originX + targetX) / 2][(originY + targetY) / 2] === null) isOK = true;
           }
         }
         break;
@@ -240,14 +248,14 @@ export default class Block {
         if (3 <= targetX && targetX <= 5 && 7 <= targetY && targetY <= 9) {
           let [absX, absY] = [Math.abs(targetX - originX), Math.abs(targetY - originY)];
           // 是否走的斜一格
-          if (absX === 1 && absY === 1) noObstacle = true;
+          if (absX === 1 && absY === 1) isOK = true;
         }
         break;
       case 4:
         if (3 <= targetX && targetX <= 5 && 7 <= targetY && targetY <= 9) {
           let [absX, absY] = [Math.abs(targetX - originX), Math.abs(targetY - originY)];
           // 是否走的横竖一格
-          if ((absX === 1 && absY === 0) || (abx === 0 && absY === 1)) noObstacle = true;
+          if ((absX === 1 && absY === 0) || (abx === 0 && absY === 1)) isOK = true;
         }
         break;
       case 6:
@@ -256,17 +264,17 @@ export default class Block {
           let [absX, absY] = [Math.abs(targetX - originX), Math.abs(targetY - originY)];
           // 在己方
           if (originY >= 5) {
-            if (absX === 0 && absY === 1) noObstacle = true;
+            if (absX === 0 && absY === 1) isOK = true;
           } else {
-            if (absX === 0 && absY === 1) noObstacle = true;
-            if (absX === 1 && absY === 0) noObstacle = true;
+            if (absX === 0 && absY === 1) isOK = true;
+            if (absX === 1 && absY === 0) isOK = true;
           }
         }
         break;
     }
 
     // 设置拿起的棋子的位置
-    if (noObstacle) {
+    if (isOK) {
       this.chessMap[originX][originY] = null;
 
       pickChess.pick = false;
@@ -275,11 +283,8 @@ export default class Block {
       this.chessMap[targetX][targetY] = pickChess;
     }
 
-    return noObstacle;
+    return isOK;
   }
-
-  // 吃
-  eat(targetX, targetY) {}
 
   // Coord 坐标数值转 Px 像素值
   coordToPx(value) {
