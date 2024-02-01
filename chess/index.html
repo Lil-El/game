@@ -55,25 +55,21 @@
             // 走
             if (!oneChess) {
               // 如果能走过去
-              if (chess.goto(x, y)) {
-                return ws.send(JSON.stringify({ ev: "CHESS", data: chess.chessMap }));
-              }
+              if (chess.goto(x, y)) return ws.send(JSON.stringify({ ev: "CHESS", data: chess.getChessMap() }));
             }
             // 重新拿起
             if (oneChess?.color === chess.getColor()) {
-              chess.pick(x, y);
-              return ws.send(JSON.stringify({ ev: "PICK", data: chess.chessMap }));
+              if (chess.pick(x, y)) return ws.send(JSON.stringify({ ev: "PICK", data: chess.getChessMap() }));
             }
             // 吃
             if ((oneChess?.color === chess.getColor()) ^ 1) {
               // 如果能吃
               if (chess.goto(x, y)) {
-                return ws.send(JSON.stringify({ ev: "CHESS", data: chess.chessMap }));
+                return ws.send(JSON.stringify({ ev: "CHESS", data: chess.getChessMap() }));
               }
             }
           } else {
-            chess.pick(x, y);
-            return ws.send(JSON.stringify({ ev: "PICK", data: chess.chessMap }));
+            if (chess.pick(x, y)) return ws.send(JSON.stringify({ ev: "PICK", data: chess.getChessMap() }));
           }
         } else {
           alert("轮不到你出手");

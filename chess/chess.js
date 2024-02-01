@@ -26,8 +26,18 @@ export default class Block {
    */
   unit = 50;
 
+  maxX = 8;
+  maxY = 9;
+
   /**
-   * 界面所有坐标点的信息
+   * 服务端的 chess 数据
+   * @private
+   * @type {Chess[][]}
+   */
+  #chessMap = [];
+
+  /**
+   * 相对于自己的 chess 数据
    * @type {Chess[][]}
    */
   chessMap = [];
@@ -71,8 +81,8 @@ export default class Block {
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
 
-    for (let x = 0; x < 9; x++) {
-      for (let y = 0; y < 10; y++) {
+    for (let x = 0; x <= this.maxX; x++) {
+      for (let y = 0; y <= this.maxY; y++) {
         const data = this.chessMap?.[x]?.[y];
         if (data) {
           this.ctx.beginPath();
@@ -142,10 +152,21 @@ export default class Block {
   }
 
   setChessMap(data) {
-    this.chessMap = data;
+    this.#chessMap = data;
+
+    if (this.getColor() === 1) {
+      // 后手 - 反转棋盘  x [0, 8]  y [0, 9]
+      this.chessMap = this.reverse(data);
+    } else {
+      // 先手即无须反转
+      this.chessMap = data;
+    }
+
     this.draw();
   }
-
+  getChessMap() {
+    return this.#chessMap;
+  }
   setColor(color) {
     this.color = color;
   }
@@ -161,10 +182,17 @@ export default class Block {
     let oneChess = this.chessMap[x][y];
 
     // 只能拿起自己颜色的棋子，设置为 true，并记录该位置
-    if (oneChess?.color === this.color) {
+    if (oneChess?.color === this.getColor()) {
       if (this.pickedCoord) this.chessMap[this.pickedCoord[0]][this.pickedCoord[1]].pick = false;
       this.pickedCoord = [x, y];
       oneChess.pick = true;
+
+      // 反转
+      if (this.getColor() === 1) {
+        this.#chessMap = this.reverse(this.chessMap);
+      }
+
+      return true;
     }
   }
 
@@ -209,7 +237,7 @@ export default class Block {
         if (
           pickChess.type === 5 &&
           this.chessMap[targetX][targetY] &&
-          this.chessMap[targetX][targetY].color !== this.color
+          this.chessMap[targetX][targetY].color !== this.getColor()
         )
           isOK = otherChessCount === 1;
 
@@ -245,14 +273,14 @@ export default class Block {
         }
         break;
       case 3:
-        if (3 <= targetX && targetX <= 5 && 7 <= targetY && targetY <= 9) {
+        if (3 <= targetX && targetX <= 5 && 7 <= targetY && targetY <= this.maxY) {
           let [absX, absY] = [Math.abs(targetX - originX), Math.abs(targetY - originY)];
           // 是否走的斜一格
           if (absX === 1 && absY === 1) isOK = true;
         }
         break;
       case 4:
-        if (3 <= targetX && targetX <= 5 && 7 <= targetY && targetY <= 9) {
+        if (3 <= targetX && targetX <= 5 && 7 <= targetY && targetY <= this.maxY) {
           let [absX, absY] = [Math.abs(targetX - originX), Math.abs(targetY - originY)];
           // 是否走的横竖一格
           if ((absX === 1 && absY === 0) || (abx === 0 && absY === 1)) isOK = true;
@@ -283,7 +311,27 @@ export default class Block {
       this.chessMap[targetX][targetY] = pickChess;
     }
 
+    // 反转
+    if (this.getColor() === 1) {
+      this.#chessMap = this.reverse(this.chessMap);
+    }
+
     return isOK;
+  }
+
+  // 反转
+  reverse(data) {
+    let result = [];
+
+    for (let i = 0; i <= this.maxX; i++) {
+      for (let j = 0; j <= this.maxY; j++) {
+        if (!result[i]) result[i] = [];
+
+        result[i][j] = data[this.maxX - i][this.maxY - j];
+      }
+    }
+
+    return result;
   }
 
   // Coord 坐标数值转 Px 像素值
