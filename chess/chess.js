@@ -126,7 +126,7 @@ export default class Block {
     // 清除中间
     this.ctx.clearRect(this.unit / 2 + 1, this.coordToPx(4), this.size.w - this.unit - 2, this.unit);
     this.ctx.font = "40px auto";
-    this.ctx.strokeText("By Mino.", 120, this.coordToPx(5) - 14);
+    this.ctx.strokeText("By Mino.", 240, this.coordToPx(5) - 20);
 
     // 绘制斜线
     this.ctx.beginPath();

@@ -1,7 +1,6 @@
 const ws = require("nodejs-websocket");
 
 let server;
-let chessMap = [];
 let players = {};
 let currentColor = 0;
 
@@ -17,7 +16,9 @@ const createPlayer = (conn) => {
   return 1;
 };
 
-const createChessMap = (source) => {
+const createChessMap = () => {
+  let source = [];
+
   for (let i = 0; i < 9; i++) {
     source[i] = [];
     for (let j = 0; j < 10; j++) {
@@ -46,6 +47,19 @@ const createChessMap = (source) => {
   return source;
 };
 
+const isOver = (data) => {
+  let bossCount = 0;
+  let winner = null;
+
+  data.forEach((item) => {
+    const boss = item.filter((p) => p?.type === 4);
+    bossCount += boss?.length || 0;
+    winner = winner || boss[0];
+  });
+
+  return bossCount === 2 ? false : winner;
+};
+
 /**
  * @typedef MSG
  * @property {String} ev 事件名
@@ -67,6 +81,7 @@ const updatePlayerStatus = () => {
   broadcast({ ev: "PLAYER", data: Object.values(players).map(({ name, color }) => ({ name, color })) });
 };
 
+
 server = ws.createServer(function (conn) {
   // 创建 player
   createPlayer(conn);
@@ -86,7 +101,7 @@ server = ws.createServer(function (conn) {
           });
           broadcast({
             ev: "CHESS",
-            data: createChessMap(chessMap),
+            data: createChessMap()
           });
         }
         break;
@@ -94,11 +109,34 @@ server = ws.createServer(function (conn) {
         broadcast({ ev: "CHESS", data });
         break;
       case "CHESS":
+        let winner = null;
+        if ((winner = isOver(data))) {
+          broadcast({
+            ev: "OVER",
+            data: winner.color,
+          });
+        } else {
+          broadcast({
+            ev: "TURN",
+            data: (currentColor = currentColor ^ 1),
+          });
+          broadcast(msg);
+        }
+        break;
+      case "RESTART":
+        if (Object.keys(players).length === 2) {
+          updatePlayerStatus();
+          Object.values(players).forEach((p) => (p.color = p.color ^ 1));
+          currentColor = 0;
+          broadcast({
+            ev: "TURN",
+            data: currentColor,
+          });
+        }
         broadcast({
-          ev: "TURN",
-          data: (currentColor = currentColor ^ 1),
+          ev: "CHESS",
+          data: createChessMap()
         });
-        broadcast(msg);
         break;
     }
   });

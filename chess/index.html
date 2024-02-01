@@ -15,15 +15,17 @@
         justify-content: center;
         align-items: center;
         gap: 20px;
-        opacity: 0.04;
+        padding: 20px;
       }
       canvas {
         border: 1px solid gray;
-        margin: 100px auto;
       }
     </style>
   </head>
   <body>
+    <div>
+      <button id="start">restart</button>
+    </div>
     <div>
       <span>玩家：</span>
       <span id="players"></span>
@@ -44,6 +46,10 @@
 
       // 创建 WebSocket 连接
       const ws = new WebSocket("ws://127.0.0.1:1997");
+
+      $("#start").click(() => {
+        ws.send(JSON.stringify({ ev: "RESTART" }));
+      });
 
       //
       $("#chess").click((evt) => {
@@ -72,7 +78,7 @@
             if (chess.pick(x, y)) return ws.send(JSON.stringify({ ev: "PICK", data: chess.getChessMap() }));
           }
         } else {
-          alert("轮不到你出手");
+          alert("轮不到你出手 || 等待其他玩家");
         }
       });
 
@@ -89,9 +95,15 @@
               }`
             );
             chess.setColor(data.find((p) => p.name === name).color);
+
+            // 游戏过程中，有人退出
+            if (data.length !== 2) isMyTurn = false;
             break;
           case "TURN":
             isMyTurn = data === chess.getColor();
+            break;
+          case "OVER":
+            alert(`${data === chess.getColor() ? "你赢了！" : "你个笨比！"}`);
             break;
           case "CHESS":
             chess.setChessMap(data);
